@@ -1,0 +1,4 @@
+rootProject.name = 'mq-compensation'
+
+//includeFlat 'mq-infrastructure'
+

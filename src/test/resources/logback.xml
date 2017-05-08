@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<configuration>
+    <property name="pattern"
+              value="%date [%thread] %-5level %logger{40} KEY[%X{logPrefix}] - %msg%n"/>
+    <property name="appId" value="compensation.mq.iapi.ymatou.com"/>
+    <property name="basePackage" value="com.ymatou.mq.compensation"/>
+    <property name="baseDir" value="/usr/local/log/${appId}"/>
+
+    <property name="level" value="info"/>
+    <property name="charset" value="UTF-8"/>
+    <property name="immediateFlush" value="true"/>
+    <property name="queueSize" value="1024"/>
+
+
+    <appender name="HTTP-POST-ERROR-APPENDER"
+              class="com.ymatou.errorreporter.logbackappender.HttpPostErrorAppender">
+        <!-- http post target url -->
+        <param name="targetUrl" value="http://alarm.ymatou.com/Alarm/SaveSingle"/>
+
+        <!-- your application id -->
+        <param name="appId" value="${appId}"/>
+    </appender>
+
+    <appender name="ERROR-APPENDER"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <file>${baseDir}/error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${baseDir}/error.%d{yyyy-MM-dd}
+            </fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <charset>${charset}</charset>
+            <pattern>${pattern}</pattern>
+            <immediateFlush>${immediateFlush}</immediateFlush>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC-ERROR-APPENDER" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>${queueSize}</queueSize>
+        <appender-ref ref="ERROR-APPENDER"/>
+    </appender>
+
+    <appender name="DEFAULT-APPENDER"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${baseDir}/default.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${baseDir}/default.%d{yyyy-MM-dd}
+            </fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <charset>${charset}</charset>
+            <pattern>${pattern}</pattern>
+            <immediateFlush>${immediateFlush}</immediateFlush>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC-DEFAULT-APPENDER" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>${queueSize}</queueSize>
+        <appender-ref ref="DEFAULT-APPENDER"/>
+    </appender>
+
+    <!-- default -->
+    <root level="${level}">
+        <appender-ref ref="ASYNC-DEFAULT-APPENDER"/>
+        <appender-ref ref="ASYNC-ERROR-APPENDER"/>
+        <appender-ref ref="HTTP-POST-ERROR-APPENDER"/>
+    </root>
+</configuration>

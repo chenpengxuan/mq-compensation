@@ -1,0 +1,157 @@
+group "com.ymatou.mq"
+version "1.0"
+
+buildscript {
+    repositories {
+        // NOTE: You should declare only repositories that you need here
+        mavenLocal()
+        mavenCentral()
+        maven { url "http://172.16.100.98/nexus/content/groups/public/"}
+        maven { url "http://repo.spring.io/release" }
+        maven { url "http://repo.spring.io/milestone" }
+        maven { url "http://repo.spring.io/snapshot" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.3.RELEASE")
+        classpath "org.springframework:springloaded:1.2.3.RELEASE"
+    }
+}
+
+apply plugin: "java"
+apply plugin: "idea"
+apply plugin: "org.springframework.boot"
+apply plugin: "maven"
+apply plugin: "eclipse-wtp"
+
+jar {
+    baseName = "mq-compensation"
+    exclude('biz.properties')
+    exclude('db.properties')
+    exclude('mongodb.properties')
+    exclude('logback-test.xml')
+}
+
+ext {
+    springBootVersion = "1.4.3.RELEASE"
+    fastJsonVersion = "1.2.6"
+
+    httpclientVersion = "4.5.2"
+    httpcoreVersion = "4.4.4"
+
+    quartzVersion = "2.2.3"
+    druidVersion = "1.0.14"
+    mysqlVersion = "5.1.31"
+
+    jacksonVersion = "2.8.6"
+    apacheCommonVersion = "3.4"
+    snakeyamlVersion = "1.9"
+    shiroVersion = "1.2.3"
+    guavaVersion = "19.0"
+    junitVersion = "4.12"
+    quartzVersion = "2.2.3"
+    javaxMailVersion = "1.4.7"
+
+    springDataMongoVersion = "1.9.2.RELEASE"
+    springDataCommonsVersion = "1.12.6.RELEASE"
+    mongoDriverVersion = "3.2.2"
+    mongoMorphiaVersion = "1.2.1"
+    querydslVersion = "4.1.4"
+
+    //ymatou
+    disconfVersion = "2.6.41"
+    errorreporterVersion = "1.0.9"
+    mqInfrastructureVersion = "1.0.0.2017050302"
+}
+
+
+configurations {
+    compile.exclude group: "org.eclipse.jetty.websocket"
+    compile.exclude group: "org.yaml"
+    compile.exclude module:"c3p0"
+}
+
+repositories {
+
+    mavenLocal()
+    maven { url "http://172.16.100.98/nexus/content/groups/public/"}
+    maven { url "http://repo.spring.io/release" }
+    maven { url "http://repo.spring.io/milestone" }
+    maven { url "http://repo.spring.io/snapshot" }
+    mavenCentral()
+
+}
+
+dependencies {
+
+//    compile(project(":mq-infrastructure"))
+    compile "com.ymatou.mq:mq-infrastructure:${mqInfrastructureVersion}"
+
+    compile "com.google.guava:guava:${guavaVersion}"
+    compile "org.apache.httpcomponents:httpclient:${httpclientVersion}"
+    compile "org.apache.httpcomponents:httpcore:${httpcoreVersion}"
+
+    compile "com.alibaba:fastjson:${fastJsonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    compile "org.apache.commons:commons-lang3:${apacheCommonVersion}"
+
+    compile "org.yaml:snakeyaml:${snakeyamlVersion}"
+
+
+    compile "org.springframework.boot:spring-boot-starter-aop:${springBootVersion}"
+    compile "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
+    compile "org.springframework.boot:spring-boot-starter-tomcat:${springBootVersion}"
+    compile "org.springframework:spring-context-support"
+    compile "org.springframework.data:spring-data-mongodb:${springDataMongoVersion}"
+
+    compile "org.quartz-scheduler:quartz:${quartzVersion}"
+    compile "com.alibaba:druid:${druidVersion}"
+    compile "mysql:mysql-connector-java:${mysqlVersion}"
+
+    compile "org.mongodb:mongo-java-driver:${mongoDriverVersion}"
+    compile "org.mongodb.morphia:morphia:${mongoMorphiaVersion}"
+    compile "org.mongodb.morphia:morphia-logging-slf4j:${mongoMorphiaVersion}"
+    compile "com.querydsl:querydsl-mongodb:${querydslVersion}"
+
+
+    compile "com.ymatou.disconf:disconf-client:${disconfVersion}"
+    compile "com.ymatou.errorreporter:errorreporter-logback:${errorreporterVersion}"
+
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+    testCompile group: "junit", name: "junit", version: "${junitVersion}"
+}
+
+
+tasks.withType(JavaCompile) {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    configure(options) {
+        encoding = 'UTF-8'
+    }
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = "2.4"
+}
+
+//复制启动，停止脚本
+task copyScript(type: Copy) {
+    into "$buildDir/dist"
+    from "$projectDir/script"
+}
+
+//复制jar
+task copyJars(type: Copy,dependsOn:jar) {
+    from configurations.runtime  //项目所有的jar依赖
+    from "$buildDir/libs"        //本项目jar
+    into "$buildDir/dist/lib"
+}
+
+//打包发布 发布为：gradle release 默认位置为：build/distributions
+task release(type: Zip,dependsOn:[copyScript,copyJars]) {
+    archiveName="mq-compensation.zip"
+    from "$buildDir/dist"
+}
